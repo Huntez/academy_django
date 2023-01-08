@@ -1,0 +1,5 @@
+connections.py
+__pycache__/
+migrations/
+*.png
+*.txt
