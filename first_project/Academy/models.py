@@ -14,7 +14,7 @@ class Curator(models.Model):
         unique=True,
         max_length=100
     )
-    
+
     def __str__(self):
         return str(self.Name)
 class Department(models.Model):
@@ -35,7 +35,7 @@ class Department(models.Model):
 
     def __str__(self):
         return self.Name
-
+    
 class Facultie(models.Model):
     Name = models.CharField(
         unique=True,
