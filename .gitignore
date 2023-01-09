@@ -1,6 +1,7 @@
 connections.py
 __pycache__/
 migrations/
+some.py
 *.png
 *.txt
 *~
