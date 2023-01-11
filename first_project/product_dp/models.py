@@ -40,3 +40,14 @@ class Users_Cart(models.Model):
 
     def __str__(self):
         return str(self.product)
+
+class Wallet(models.Model):
+    user_chat_id = models.PositiveBigIntegerField(unique=True)
+    balance = models.DecimalField(
+        default=0,
+        max_digits=100,
+        decimal_places=3,
+    )
+    
+    def __str__(self):
+        return str(self.user_chat_id)

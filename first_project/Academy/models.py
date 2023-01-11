@@ -17,6 +17,7 @@ class Curator(models.Model):
 
     def __str__(self):
         return str(self.Name)
+
 class Department(models.Model):
     Name = models.CharField(
         unique=True,
