@@ -88,21 +88,17 @@ def category_button_handler(message):
 def cart_and_payment(message):
     user_cart = [str(i.product)
     for i in Users_Cart.objects.filter(user_chat_id = 
-            message.chat.id)]
+                                        message.chat.id)]
 
     if user_cart:
-        product_cost = dict()
-        for i in Product.objects.all():
-            product_cost[i.Name] = i.Cost
-
         user_cart_result = dict()
         for i in user_cart:
             if i not in user_cart_result:
                 user_cart_result[i] = user_cart.count(i)
 
-        user_cart_cost = 0
-        for res in user_cart_result:
-            user_cart_cost += product_cost[res] * user_cart_result[res]
+        user_cart_cost = sum([i.product.Cost for i in
+                Users_Cart.objects.filter(user_chat_id = 
+                                         message.chat.id)])
 
         if message.text == '/cart':
             bot.send_message(message.chat.id,
