@@ -88,7 +88,7 @@ class Trainer(models.Model):
     # end_work = models.TimeField()
 
     def __str__(self):
-        return str(self.name)
+        return str(self.name + ' ' + self.surname)
 
 class TrainingTime(models.Model):
     user_chat_id = models.ForeignKey('User', on_delete=models.CASCADE)

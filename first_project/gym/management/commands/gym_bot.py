@@ -98,14 +98,19 @@ def end_workout(message):
                 user_chat_id__user_chat_id = message.chat.id).latest('user_chat_id')
     user_sub = Subscription.objects.get(
             user_chat_id__user_chat_id = message.chat.id)
+    trainer_name = str(user_train.trainer).split(' ')
+    trainer = Trainer.objects.get(name=trainer_name[0], surname=trainer_name[1])
 
     if user.on_workout:
         user.on_workout = False
         user.save()
-        
+
+        trainer.free = True
+        trainer.save()
+
         user_train.end_time = time
         user_train.save()
-
+        
         user_sub.exercises -= 1
         user_sub.save()
 
@@ -129,24 +134,37 @@ def list_workouts(message):
                 \nEnd time - {i.end_time}\
                 \nTrainer - {i.trainer}\n')
 
-    bot.send_message(message.chat.id, '\n'.join(user_workout_list))
+    if user_workout_list:
+        bot.send_message(message.chat.id, '\n'.join(user_workout_list))
+    else:
+        bot.send_message(message.chat.id, 'Dont have previous workouts!')
 
 
 @bot.message_handler(commands=['select_trainer'], func=check)
 def select_trainer(message):
     keyboard = telebot.types.InlineKeyboardMarkup()
     trainers = Trainer.objects.filter(free = True)
+    user = User.objects.get(user_chat_id = message.chat.id)
+    user_train = TrainingTime.objects.filter(
+                user_chat_id__user_chat_id = message.chat.id).latest('user_chat_id')
+    print(user_train.start_time)
 
-    if trainers:
-        for obj in trainers:
-            button = telebot.types.InlineKeyboardButton(f'{obj.name} {obj.surname}',
-                callback_data=obj.name)
-            keyboard.add(button)
+    if user.on_workout:
+        if str(user_train.trainer) == 'None':
+            if trainers:
+                for obj in trainers:
+                    button = telebot.types.InlineKeyboardButton(f'{obj.name} {obj.surname}',
+                        callback_data=obj.name + ' ' +  obj.surname)
+                    keyboard.add(button)
 
-            bot.send_message(message.chat.id, 'Avaliable trainers :', 
-                             reply_markup=keyboard)
+                    bot.send_message(message.chat.id, 'Avaliable trainers :', 
+                                     reply_markup=keyboard)
+            else:
+                bot.send_message(message.chat.id, 'Non aviliable trainers!')
+        else:
+            bot.send_message(message.chat.id, 'Your already claimed trainer!')
     else:
-        bot.send_message(message.chat.id, 'Non aviliable trainers!')
+        bot.send_message(message.chat.id, 'First start workout! /start_workout')
 
 
 @bot.message_handler(commands=['check_workout_exercises'], func=check)
@@ -263,38 +281,52 @@ def clearusercart(message):
 
 
 @bot.callback_query_handler(func=lambda call: True
-                            if Trainer.objects.filter(name=call.data) else False)
-def start_workout_callback(call):
-    bot.send_message(call.message.chat.id, "KVAAA")
+                            if Trainer.objects.filter(name=(call.data).split(' ')[0]) else False)
+def select_trainer_callback(call):
+    trainer_data = call.data.split(' ')
+    trainer = Trainer.objects.get(name=trainer_data[0], surname=trainer_data[1])
 
+    if check(call.message) and trainer.free:
+        user_train = TrainingTime.objects.filter(
+                    user_chat_id__user_chat_id = call.message.chat.id).latest('user_chat_id')
+        user_train.trainer = trainer
+        user_train.save()
+
+        trainer.free = False
+        trainer.save()
+
+        bot.send_message(call.message.chat.id, "Trainer claimed!")
+    
 
 @bot.callback_query_handler(func=lambda call: True
                             if Sub_product.objects.filter(name=call.data) else False)
 def sub_buy(call):
-    sub_product = Sub_product.objects.get(name = call.data)
+    if check(call.message):
+        sub_product = Sub_product.objects.get(name = call.data)
 
-    sub_check(call.message)
+        sub_check(call.message)
 
-    if wallet_pay(call.message, sub_product.cost):
-        bot.send_message(call.message.chat.id, 'Succsess buy!')
+        if wallet_pay(call.message, sub_product.cost):
+            bot.send_message(call.message.chat.id, 'Succsess buy!')
 
-        user = Subscription.objects.get(
-                user_chat_id__user_chat_id = call.message.chat.id)
-        user.exercises += sub_product.exercises
-        user.save()
+            user = Subscription.objects.get(
+                    user_chat_id__user_chat_id = call.message.chat.id)
+            user.exercises += sub_product.exercises
+            user.save()
 
-        start(call.message)
+            start(call.message)
 
 
 @bot.callback_query_handler(func=lambda call: True
                             if Product.objects.filter(name=call.data) else False)
 def user_cart(call):
-    Users_Cart.objects.get_or_create(
-        user_chat_id = User.objects.get(user_chat_id = call.message.chat.id),
-        product = Product.objects.get(name=call.data),
-        category = Product.objects.get(name=call.data).category,
-        date = datetime.now()
-    )
-    bot.send_message(call.message.chat.id, 'Product added to /cart')
+    if check(call.message):
+        Users_Cart.objects.get_or_create(
+            user_chat_id = User.objects.get(user_chat_id = call.message.chat.id),
+            product = Product.objects.get(name=call.data),
+            category = Product.objects.get(name=call.data).category,
+            date = datetime.now()
+        )
+        bot.send_message(call.message.chat.id, 'Product added to /cart')
 
 bot.infinity_polling()
