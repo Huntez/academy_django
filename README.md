@@ -30,14 +30,14 @@ with functions from **product_db**
 * Ability to choose an available coach
 * Usable through the admin panel
 
-**Start bot menu**
+Start bot menu
 
 <p align="center">
   <img src="./img/gym_bot_start.png" width="500">
 </p>
 
-**Start and end exercise, with selecting trainer and 
-list of workouts**
+Start and end exercise, with selecting trainer and 
+list of workouts
 
 <p align="center">
   <img src="./img/gym_bot_exercies.png" width="500">
