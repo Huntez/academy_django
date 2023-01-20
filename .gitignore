@@ -5,3 +5,4 @@ some.py
 *.png
 *.txt
 *~
+db.sqlite3

@@ -106,7 +106,7 @@ def end_workout(message):
             trainer.free = True
             trainer.save()
 
-        user_train.end_time = time
+        user_train.end_time = time:
         user_train.save()
         
         user_sub.exercises -= 1
