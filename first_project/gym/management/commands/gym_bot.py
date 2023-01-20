@@ -7,19 +7,11 @@ from datetime import datetime
 bot = telebot.TeleBot(token=token)
 
 def check(message):
-    if Subscription.objects.get(
-            user_chat_id__user_chat_id = message.chat.id).exercises == 0:
+    if Subscription.objects.filter(
+            user_chat_id__user_chat_id = message.chat.id)[0].exercises == 0:
         return False
     else:
         return True
-
-def sub_check(message):
-    if not Subscription.objects.filter(
-            user_chat_id__user_chat_id = message.chat.id):
-        Subscription.objects.get_or_create(
-            user_chat_id = User.objects.get(user_chat_id = message.chat.id),
-            exercises = 0
-        )
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -30,8 +22,11 @@ def start(message):
         Wallet.objects.get_or_create(
             user_chat_id = User.objects.get(user_chat_id = message.chat.id),
         )
-    
-    sub_check(message)
+        Subscription.objects.get_or_create(
+            user_chat_id = User.objects.get(user_chat_id = message.chat.id),
+            exercises = 0
+        )
+
     if check(message):
         func_list = ['/categories', '/cart', '/payorder',
                      '/checkwallet', '/addtowallet', 
@@ -98,15 +93,18 @@ def end_workout(message):
                 user_chat_id__user_chat_id = message.chat.id).latest('user_chat_id')
     user_sub = Subscription.objects.get(
             user_chat_id__user_chat_id = message.chat.id)
-    trainer_name = str(user_train.trainer).split(' ')
-    trainer = Trainer.objects.get(name=trainer_name[0], surname=trainer_name[1])
 
     if user.on_workout:
         user.on_workout = False
         user.save()
 
-        trainer.free = True
-        trainer.save()
+        if user_train.trainer:
+            trainer_name = str(user_train.trainer).split(' ')
+            trainer = Trainer.objects.get(name=trainer_name[0], 
+                                          surname=trainer_name[1])
+
+            trainer.free = True
+            trainer.save()
 
         user_train.end_time = time
         user_train.save()
@@ -301,10 +299,8 @@ def select_trainer_callback(call):
 @bot.callback_query_handler(func=lambda call: True
                             if Sub_product.objects.filter(name=call.data) else False)
 def sub_buy(call):
-    if check(call.message):
+    if not check(call.message):
         sub_product = Sub_product.objects.get(name = call.data)
-
-        sub_check(call.message)
 
         if wallet_pay(call.message, sub_product.cost):
             bot.send_message(call.message.chat.id, 'Succsess buy!')
