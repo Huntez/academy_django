@@ -2,7 +2,6 @@ connections.py
 __pycache__/
 migrations/
 some.py
-*.png
 *.txt
 *~
 db.sqlite3
